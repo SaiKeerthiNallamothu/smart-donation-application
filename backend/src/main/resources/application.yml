@@ -1,0 +1,101 @@
+# ============================================================================
+# Smart Donation and Resource Management System - Backend configuration
+#
+# Local development defaults point at the docker-compose services:
+#   docker compose up -d mysql redis
+#
+# Every value can be overridden with an environment variable.
+# ============================================================================
+
+spring:
+  application:
+    name: smart-donation-backend
+
+  # Local profile is the default; override with SPRING_PROFILES_ACTIVE in prod.
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+
+  # ---------------- MySQL (main database) ----------------
+  datasource:
+    url: jdbc:mysql://localhost:3306/smart_donation
+    username: root
+    password: 1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  # ---------------- JPA / Hibernate ----------------
+  jpa:
+    hibernate:
+      # Hibernate creates/updates the schema from the JPA entities (no Flyway).
+      ddl-auto: update
+    open-in-view: false
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+
+  # ---------------- Flyway (disabled - schema is managed by Hibernate) ----
+  flyway:
+    enabled: false
+
+  # ---------------- Redis (pending registrations + OTPs) ----------------
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2s
+
+  # ---------------- Jackson ----------------
+  jackson:
+    default-property-inclusion: non_null
+    time-zone: UTC
+
+# ---------------- Server ----------------
+server:
+  port: ${SERVER_PORT:8080}
+
+# ---------------- Actuator ----------------
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+# ---------------- OpenAPI / Swagger ----------------
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+
+# ---------------- JWT ----------------
+jwt:
+  # HS256 signing secret (at least 32 chars). OVERRIDE in production via JWT_SECRET!
+  secret: ${JWT_SECRET:c21hcnQtZG9uYXRpb24tc3VwZXItc2VjcmV0LWtleS1mb3Itand0LWhzMjU2LXNpZ25pbmctMjAyNg==}
+  validity:
+    accessToken: 86400000   # 24 hours
+    refreshToken: 604800000 # 7 days
+
+# ---------------- Resend (email verification) ----------------
+resend:
+  # Create an API key at https://resend.com/api-keys
+  # Until RESEND_API_KEY is set, the OTP is printed to the application console.
+  api-key: ${RESEND_API_KEY:}
+  # Verified sender address. Until you verify a domain, Resend only allows
+  # testing with 'onboarding@resend.dev' and only to your own email.
+  from-email: ${RESEND_FROM_EMAIL:Smart Donation <onboarding@resend.dev>}
+
+# ---------------- CORS ----------------
+app:
+  cors:
+    # Comma-separated list of allowed origins (the React dev server).
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+
+# ---------------- Logging ----------------
+logging:
+  level:
+    com.smartdonation: DEBUG
