@@ -35,7 +35,7 @@ public class AuthController {
     }
 
     @PostMapping("/verify-email")
-    public ResponseEntity<AuthResponseDto> verifyEmail(@Valid @RequestBody VerifyOtpRequest verifyOtpRequest)
+    public ResponseEntity<UserResponseDto> verifyEmail(@Valid @RequestBody VerifyOtpRequest verifyOtpRequest)
             throws InvalidOtpException, OtpExpiredException, UserAlreadyExistException {
         return ResponseEntity.ok(authService.verifyEmail(verifyOtpRequest));
     }

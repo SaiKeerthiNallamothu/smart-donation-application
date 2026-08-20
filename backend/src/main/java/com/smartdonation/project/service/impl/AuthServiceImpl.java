@@ -49,9 +49,10 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public UserResponseDto registerUser(UserRegisterRequest userRegisterRequest)
             throws UserAlreadyExistException, ResendException {
-        // Admin accounts are provisioned by an existing admin, never self-registered.
-        if (userRegisterRequest.getRole() == Role.ADMIN) {
-            throw new IllegalArgumentException("Admin accounts cannot be self-registered");
+        // Only one admin is allowed in the system. The first admin self-registers;
+        // any later admin registration is rejected.
+        if (userRegisterRequest.getRole() == Role.ADMIN && userRepository.existsByRole(Role.ADMIN)) {
+            throw new IllegalArgumentException("An admin already exists. Only one admin account is allowed");
         }
 
         String email = userRegisterRequest.getEmail().trim().toLowerCase();
@@ -80,7 +81,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public AuthResponseDto verifyEmail(VerifyOtpRequest verifyOtpRequest)
+    public UserResponseDto verifyEmail(VerifyOtpRequest verifyOtpRequest)
             throws InvalidOtpException, OtpExpiredException, UserAlreadyExistException {
         String email = verifyOtpRequest.getEmail().trim().toLowerCase();
 
@@ -95,6 +96,13 @@ public class AuthServiceImpl implements AuthService {
         }
 
         UserRegisterRequest request = (UserRegisterRequest) storedRequest;
+
+        // Safety net: even if two admin registrations were pending at the same time,
+        // only one admin may ever be written to the database.
+        if (request.getRole() == Role.ADMIN && userRepository.existsByRole(Role.ADMIN)) {
+            throw new IllegalArgumentException("An admin already exists. Only one admin account is allowed");
+        }
+
         User user = User.builder()
                 .firstName(request.getFirstName().trim())
                 .lastName(request.getLastName().trim())
@@ -102,6 +110,7 @@ public class AuthServiceImpl implements AuthService {
                 .phone(request.getPhone().trim())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(request.getRole())
+                .emailVerified(true)
                 .build();
 
         User saved = userRepository.save(user);
@@ -111,14 +120,13 @@ public class AuthServiceImpl implements AuthService {
         redisTemplate.delete(PENDING_REGISTRATION_KEY_PREFIX + email);
         log.info("Email verified and user registered: {}", email);
 
-        String accessToken = jwtUtil.generateAccessToken(saved);
-        String refreshToken = jwtUtil.generateRefreshToken(saved);
-
-        return AuthResponseDto.builder()
-                .token(accessToken)
-                .refreshToken(refreshToken)
-                .role(saved.getRole().name())
+        return UserResponseDto.builder()
+                .id(saved.getId())
+                .firstName(saved.getFirstName())
+                .lastName(saved.getLastName())
                 .email(saved.getEmail())
+                .phone(saved.getPhone())
+                .role(saved.getRole())
                 .message("Email verified, registration successful")
                 .build();
     }

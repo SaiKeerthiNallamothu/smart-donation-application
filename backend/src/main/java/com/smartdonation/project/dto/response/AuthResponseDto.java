@@ -19,6 +19,10 @@ public class AuthResponseDto {
     private String refreshToken;
 
     /** The authenticated user's role, e.g. {@code DONOR}, {@code NGO}, {@code ADMIN}. */
+    private String firstName;
+
+    private String lastName;
+
     private String role;
 
     private String email;
