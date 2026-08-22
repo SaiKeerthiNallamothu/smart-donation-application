@@ -47,6 +47,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<UserResponseDto> getAllNonAdminUsers() {
+        return userRepository.findByRoleNot(Role.ADMIN).stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<UserResponseDto> getUsersByRole(Role role) {
         return userRepository.findAllByRole(role).stream()
                 .map(this::mapToResponse)

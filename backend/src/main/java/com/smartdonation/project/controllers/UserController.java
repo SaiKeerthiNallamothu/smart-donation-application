@@ -23,8 +23,8 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
-    public ResponseEntity<List<UserResponseDto>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
+    public ResponseEntity<List<UserResponseDto>> getAllNonAdminUsers() {
+        return ResponseEntity.ok(userService.getAllNonAdminUsers());
     }
 
     @GetMapping("/{id}")

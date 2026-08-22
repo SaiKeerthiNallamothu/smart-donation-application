@@ -47,9 +47,24 @@ public class SecurityConfig {
                                 "/api/v1/donor/profile/**"
                         ).hasRole("DONOR")
 
+                        // ── NGO manages own profile ────────────────────────────
+                        .requestMatchers(
+                                "/api/v1/ngo/profile/**"
+                        ).hasRole("NGO")
+
+                        // ── Donor views verified NGOs ──────────────────────────
+                        .requestMatchers(
+                                "/api/v1/ngos/**"
+                        ).hasRole("DONOR")
+
                         // ── Admin manages users ────────────────────────────────
                         .requestMatchers(
                                 "/api/v1/users/**"
+                        ).hasRole("ADMIN")
+
+                        // ── Admin verifies NGOs ────────────────────────────────
+                        .requestMatchers(
+                                "/api/v1/admin/**"
                         ).hasRole("ADMIN")
 
                         // ── All remaining APIs require authentication ──────────

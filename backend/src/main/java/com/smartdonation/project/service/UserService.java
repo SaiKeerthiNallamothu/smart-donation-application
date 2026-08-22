@@ -18,6 +18,9 @@ public interface UserService {
     /** Returns all registered users. */
     List<UserResponseDto> getAllUsers();
 
+    /** Returns all non-admin users (DONOR, NGO, VOLUNTEER). */
+    List<UserResponseDto> getAllNonAdminUsers();
+
     /** Returns all users with the given role. */
     List<UserResponseDto> getUsersByRole(Role role);
 

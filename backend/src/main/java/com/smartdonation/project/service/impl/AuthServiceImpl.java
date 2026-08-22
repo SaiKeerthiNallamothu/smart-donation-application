@@ -56,10 +56,9 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public UserResponseDto registerUser(UserRegisterRequest userRegisterRequest)
             throws UserAlreadyExistException, ResendException {
-        // Only one admin is allowed in the system. The first admin self-registers;
-        // any later admin registration is rejected.
-        if (userRegisterRequest.getRole() == Role.ADMIN && userRepository.existsByRole(Role.ADMIN)) {
-            throw new IllegalArgumentException("An admin already exists. Only one admin account is allowed");
+        // Public registration is not allowed for ADMIN role.
+        if (userRegisterRequest.getRole() == Role.ADMIN) {
+            throw new IllegalArgumentException("Public registration with ADMIN role is not allowed. Please contact the system administrator.");
         }
 
         String email = userRegisterRequest.getEmail().trim().toLowerCase();
@@ -103,12 +102,6 @@ public class AuthServiceImpl implements AuthService {
         }
 
         UserRegisterRequest request = (UserRegisterRequest) storedRequest;
-
-        // Safety net: even if two admin registrations were pending at the same time,
-        // only one admin may ever be written to the database.
-        if (request.getRole() == Role.ADMIN && userRepository.existsByRole(Role.ADMIN)) {
-            throw new IllegalArgumentException("An admin already exists. Only one admin account is allowed");
-        }
 
         User user = User.builder()
                 .firstName(request.getFirstName().trim())
