@@ -22,8 +22,8 @@ public interface AuthService {
     UserResponseDto registerUser(UserRegisterRequest userRegisterRequest)
             throws UserAlreadyExistException, ResendException;
 
-    /** Verifies the OTP and, on success, saves the user to the main database and returns tokens. */
-    AuthResponseDto verifyEmail(VerifyOtpRequest verifyOtpRequest)
+    /** Verifies the OTP and, on success, saves the user to the main database with emailVerified=true. */
+    UserResponseDto verifyEmail(VerifyOtpRequest verifyOtpRequest)
             throws InvalidOtpException, OtpExpiredException, UserAlreadyExistException;
 
     AuthResponseDto login(LoginRequest loginRequest) throws IllegalCredentialsException, UserNotFoundException;

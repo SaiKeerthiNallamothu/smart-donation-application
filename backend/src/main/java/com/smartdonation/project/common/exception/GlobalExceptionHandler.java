@@ -2,6 +2,7 @@ package com.smartdonation.project.common.exception;
 
 import com.resend.core.exception.ResendException;
 import org.slf4j.Logger;
+import org.springframework.data.redis.serializer.SerializationException;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -43,6 +44,16 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex) {
+        return build(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateResource(DuplicateResourceException ex) {
+        return build(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
     @ExceptionHandler({InvalidOtpException.class, OtpExpiredException.class})
     public ResponseEntity<ErrorResponse> handleOtp(RuntimeException ex) {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage());
@@ -68,6 +79,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleResend(ResendException ex) {
         log.error("Resend email service error", ex);
         return build(HttpStatus.BAD_GATEWAY, "Failed to send verification email");
+    }
+
+    @ExceptionHandler(SerializationException.class)
+    public ResponseEntity<ErrorResponse> handleRedisSerialization(SerializationException ex) {
+        log.error("Failed to deserialize data stored in Redis", ex);
+        return build(HttpStatus.INTERNAL_SERVER_ERROR,
+                "Stored registration data could not be read. Please register again");
     }
 
     @ExceptionHandler(Exception.class)

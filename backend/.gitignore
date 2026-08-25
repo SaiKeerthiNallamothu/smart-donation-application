@@ -1,0 +1,31 @@
+# Build output
+target/
+build/
+*.class
+*.jar
+*.war
+
+# Local dev tooling (portable maven + redis downloaded for testing)
+.tools/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+.factorypath
+
+# Environment & secrets
+.env
+.env.local
+*.pem
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

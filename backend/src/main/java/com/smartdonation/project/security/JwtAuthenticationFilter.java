@@ -24,12 +24,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
 
+    private static final List<String> PUBLIC_PATHS = List.of(
+            "/api/v1/auth/register",
+            "/api/v1/auth/verify-email",
+            "/api/v1/auth/login"
+    );
+
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain
     ) throws ServletException, IOException {
+        // Skip JWT validation for public endpoints.
+        if (PUBLIC_PATHS.stream().anyMatch(path -> request.getServletPath().startsWith(path))) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String token = jwtUtil.retrieveTokenFromRequest(request);
         try {
             if (token == null)
@@ -45,7 +57,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     (GrantedAuthority) authority)
                             .toList();
 
-            /*
+            /*g
                 Create Authentication Object
              */
 
@@ -90,14 +102,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
 
-        String path = request.getServletPath();
-
-        return path.equals("/api/v1/auth/register")
-                || path.equals("/api/v1/auth/verify-email")
-                || path.equals("/api/v1/auth/login");
-    }
 
 }
