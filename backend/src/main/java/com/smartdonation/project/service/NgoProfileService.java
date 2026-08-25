@@ -5,6 +5,7 @@ import com.smartdonation.project.common.exception.ResourceNotFoundException;
 import com.smartdonation.project.dto.request.NgoProfileRequest;
 import com.smartdonation.project.dto.response.NgoProfileResponse;
 import com.smartdonation.project.dto.response.NgoPublicResponse;
+import com.smartdonation.project.dto.request.update.NgoProfileUpdateRequest;
 import com.smartdonation.project.enums.VerificationStatus;
 
 import java.util.List;
@@ -22,7 +23,7 @@ public interface NgoProfileService {
             throws ResourceNotFoundException;
 
     /** Updates the NGO profile of the currently authenticated user. */
-    NgoProfileResponse updateProfile(String email, NgoProfileRequest request)
+    NgoProfileResponse updateProfile(String email, NgoProfileUpdateRequest request)
             throws ResourceNotFoundException;
 
     /** Deletes the NGO profile of the currently authenticated user. */

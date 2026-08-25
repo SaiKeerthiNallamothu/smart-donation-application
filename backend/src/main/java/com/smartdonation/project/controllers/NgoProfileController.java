@@ -5,6 +5,7 @@ import com.smartdonation.project.common.exception.ResourceNotFoundException;
 import com.smartdonation.project.dto.request.NgoProfileRequest;
 import com.smartdonation.project.dto.response.NgoProfileResponse;
 import com.smartdonation.project.dto.response.NgoPublicResponse;
+import com.smartdonation.project.dto.request.update.NgoProfileUpdateRequest;
 import com.smartdonation.project.enums.VerificationStatus;
 import com.smartdonation.project.service.NgoProfileService;
 import jakarta.validation.Valid;
@@ -53,7 +54,7 @@ public class NgoProfileController {
     @PutMapping("/api/v1/ngo/profile/update")
     public ResponseEntity<NgoProfileResponse> updateProfile(
             Authentication authentication,
-            @Valid @RequestBody NgoProfileRequest request)
+            @Valid @RequestBody NgoProfileUpdateRequest request)
             throws ResourceNotFoundException {
         String email = authentication.getName();
         return ResponseEntity.ok(ngoProfileService.updateProfile(email, request));

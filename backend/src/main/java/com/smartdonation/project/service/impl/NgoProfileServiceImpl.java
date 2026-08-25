@@ -7,7 +7,7 @@ import com.smartdonation.project.dto.request.NgoProfileRequest;
 import com.smartdonation.project.dto.response.AddressResponse;
 import com.smartdonation.project.dto.response.NgoProfileResponse;
 import com.smartdonation.project.dto.response.NgoPublicResponse;
-import com.smartdonation.project.dto.response.UserResponseDto;
+import com.smartdonation.project.dto.request.update.NgoProfileUpdateRequest;
 import com.smartdonation.project.entities.Address;
 import com.smartdonation.project.entities.NgoProfile;
 import com.smartdonation.project.entities.User;
@@ -84,12 +84,18 @@ public class NgoProfileServiceImpl implements NgoProfileService {
 
     @Override
     @Transactional
-    public NgoProfileResponse updateProfile(String email, NgoProfileRequest request) {
+    public NgoProfileResponse updateProfile(String email, NgoProfileUpdateRequest request) {
         User user = getUserByEmail(email);
 
         NgoProfile profile = ngoProfileRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("NGO profile not found"));
 
+        // Update User fields
+        user.setFirstName(request.getFirstName().trim());
+        user.setLastName(request.getLastName().trim());
+        user.setPhone(request.getPhone().trim());
+
+        // Update NGO-specific fields
         profile.setNgoName(request.getNgoName().trim());
         profile.setRegistrationNumber(request.getRegistrationNumber().trim());
         profile.setContactPersonName(request.getContactPersonName().trim());
@@ -100,7 +106,7 @@ public class NgoProfileServiceImpl implements NgoProfileService {
                 request.getWebsite() != null ? request.getWebsite().trim() : null
         );
 
-        // Update address fields
+        // Update Address fields
         Address address = profile.getAddress();
         AddressRequest addrReq = request.getAddress();
         address.setAddressLine1(addrReq.getAddressLine1().trim());
@@ -216,15 +222,6 @@ public class NgoProfileServiceImpl implements NgoProfileService {
         User user = profile.getUser();
         Address addr = profile.getAddress();
 
-        UserResponseDto userDto = UserResponseDto.builder()
-                .id(user.getId())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .email(user.getEmail())
-                .phone(user.getPhone())
-                .role(user.getRole())
-                .build();
-
         AddressResponse addressResponse = AddressResponse.builder()
                 .id(addr.getId())
                 .addressLine1(addr.getAddressLine1())
@@ -236,14 +233,17 @@ public class NgoProfileServiceImpl implements NgoProfileService {
                 .build();
 
         return NgoProfileResponse.builder()
-                .profileId(profile.getId())
+                .id(profile.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .phone(user.getPhone())
                 .ngoName(profile.getNgoName())
                 .registrationNumber(profile.getRegistrationNumber())
                 .contactPersonName(profile.getContactPersonName())
                 .description(profile.getDescription())
                 .website(profile.getWebsite())
                 .verificationStatus(profile.getVerificationStatus())
-                .user(userDto)
                 .address(addressResponse)
                 .message(message)
                 .build();

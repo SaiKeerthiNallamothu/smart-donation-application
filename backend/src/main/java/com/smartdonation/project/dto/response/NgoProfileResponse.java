@@ -12,21 +12,22 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class NgoProfileResponse {
 
-    private Long profileId;
+    private Long id;
 
+    // From User
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String phone;
+
+    // NGO-specific fields
     private String ngoName;
-
     private String registrationNumber;
-
     private String contactPersonName;
-
     private String description;
-
     private String website;
 
     private VerificationStatus verificationStatus;
-
-    private UserResponseDto user;
 
     private AddressResponse address;
 
