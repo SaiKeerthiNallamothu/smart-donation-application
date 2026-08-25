@@ -1,0 +1,14 @@
+# ============================================================================
+# Docker profile — overrides for running inside docker-compose
+# ============================================================================
+
+spring:
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:smart_donation}
+    username: ${DB_USER:smart_donation}
+    password: ${DB_PASSWORD:smart_donation}
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
