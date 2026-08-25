@@ -1,0 +1,65 @@
+# Local development infrastructure for the Smart Donation backend.
+#
+# Start everything:   docker compose up --build
+# Start infra only:  docker compose up -d mysql redis
+# Stop:               docker compose down
+
+services:
+  # ── Spring Boot App ───────────────────────────────────────────
+  app:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: smart-donation-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: smart_donation
+      DB_USER: smart_donation
+      DB_PASSWORD: smart_donation
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  # ── MySQL ─────────────────────────────────────────────────────
+  mysql:
+    image: mysql:8.4
+    container_name: smart-donation-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: smart_donation
+      MYSQL_USER: smart_donation
+      MYSQL_PASSWORD: smart_donation
+      MYSQL_ROOT_PASSWORD: root
+      TZ: UTC
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ─────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: smart-donation-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+volumes:
+  mysql-data:
+  redis-data:
