@@ -17,7 +17,7 @@ spring:
 
   # ---------------- MySQL (main database) ----------------
   datasource:
-    url: jdbc:mysql://localhost:3306/smart_donation
+    url: jdbc:mysql://localhost:3306/smartdonationapi
     username: root
     password: root
     driver-class-name: com.mysql.cj.jdbc.Driver

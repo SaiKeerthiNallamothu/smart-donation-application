@@ -6,7 +6,10 @@ import com.smartdonation.project.common.exception.InvalidOtpException;
 import com.smartdonation.project.common.exception.OtpExpiredException;
 import com.smartdonation.project.common.exception.UserAlreadyExistException;
 import com.smartdonation.project.common.exception.UserNotFoundException;
+import com.smartdonation.project.dto.request.ForgotPasswordRequest;
 import com.smartdonation.project.dto.request.LoginRequest;
+import com.smartdonation.project.dto.request.RefreshTokenRequest;
+import com.smartdonation.project.dto.request.ResetPasswordRequest;
 import com.smartdonation.project.dto.request.UserRegisterRequest;
 import com.smartdonation.project.dto.request.VerifyOtpRequest;
 import com.smartdonation.project.dto.response.AuthResponseDto;
@@ -27,4 +30,19 @@ public interface AuthService {
             throws InvalidOtpException, OtpExpiredException, UserAlreadyExistException;
 
     AuthResponseDto login(LoginRequest loginRequest) throws IllegalCredentialsException, UserNotFoundException;
+
+    /** Issues a new access token (and rotating refresh token) from a valid refresh token. */
+    AuthResponseDto refreshToken(RefreshTokenRequest refreshTokenRequest)
+            throws IllegalCredentialsException;
+
+    /** Blacklists the current tokens so they can no longer be used. */
+    void logout(String email);
+
+    /** Sends a password-reset OTP to the user's email. */
+    UserResponseDto forgotPassword(ForgotPasswordRequest forgotPasswordRequest)
+            throws UserNotFoundException, ResendException;
+
+    /** Verifies the reset OTP and updates the user's password. */
+    UserResponseDto resetPassword(ResetPasswordRequest resetPasswordRequest)
+            throws InvalidOtpException, OtpExpiredException, UserNotFoundException;
 }
