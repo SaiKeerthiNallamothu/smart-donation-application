@@ -52,8 +52,20 @@ public class SecurityConfig {
                                 "/api/v1/ngo/profile/**"
                         ).hasRole("NGO")
 
-                        // ── Donor views verified NGOs ──────────────────────────
+                        // ── Volunteer manages own profile ──────────────────────
                         .requestMatchers(
+                                "/api/v1/volunteer/profile/**"
+                        ).hasRole("VOLUNTEER")
+
+                        // ── Volunteer manages own driving licence ───────────────
+                        .requestMatchers(
+                                "/api/v1/volunteer/license/**"
+                        ).hasRole("VOLUNTEER")
+
+                        // ── Donor views verified NGOs (GET only) ────────────────
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/v1/ngos",
                                 "/api/v1/ngos/**"
                         ).hasRole("DONOR")
 

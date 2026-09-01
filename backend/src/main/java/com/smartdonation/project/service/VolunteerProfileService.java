@@ -2,6 +2,7 @@ package com.smartdonation.project.service;
 
 import com.smartdonation.project.common.exception.DuplicateResourceException;
 import com.smartdonation.project.common.exception.ResourceNotFoundException;
+import com.smartdonation.project.dto.request.DrivingLicenseRequest;
 import com.smartdonation.project.dto.request.DrivingLicenseVerifyRequest;
 import com.smartdonation.project.dto.request.VolunteerProfileRequest;
 import com.smartdonation.project.dto.response.DrivingLicenseResponse;
@@ -28,6 +29,16 @@ public interface VolunteerProfileService {
 
     /** Deletes the volunteer profile of the currently authenticated user. */
     void deleteProfile(String email)
+            throws ResourceNotFoundException;
+
+    // ─── Volunteer: own driving licence ───────────────────────
+
+    /** Volunteer submits or updates their own driving licence. */
+    DrivingLicenseResponse submitLicense(String email, DrivingLicenseRequest request)
+            throws ResourceNotFoundException;
+
+    /** Volunteer retrieves their own driving licence. */
+    DrivingLicenseResponse getOwnLicense(String email)
             throws ResourceNotFoundException;
 
     // ─── Admin: volunteer management ──────────────────────────

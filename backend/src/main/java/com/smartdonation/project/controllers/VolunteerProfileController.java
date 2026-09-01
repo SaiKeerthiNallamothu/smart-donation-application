@@ -2,6 +2,7 @@ package com.smartdonation.project.controllers;
 
 import com.smartdonation.project.common.exception.DuplicateResourceException;
 import com.smartdonation.project.common.exception.ResourceNotFoundException;
+import com.smartdonation.project.dto.request.DrivingLicenseRequest;
 import com.smartdonation.project.dto.request.DrivingLicenseVerifyRequest;
 import com.smartdonation.project.dto.request.VolunteerProfileRequest;
 import com.smartdonation.project.dto.response.DrivingLicenseResponse;
@@ -66,6 +67,28 @@ public class VolunteerProfileController {
         String email = authentication.getName();
         volunteerProfileService.deleteProfile(email);
         return ResponseEntity.noContent().build();
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // VOLUNTEER → OWN DRIVING LICENCE
+    // ═══════════════════════════════════════════════════════════
+
+    @PostMapping("/api/v1/volunteer/license/submit")
+    public ResponseEntity<DrivingLicenseResponse> submitLicense(
+            Authentication authentication,
+            @Valid @RequestBody DrivingLicenseRequest request)
+            throws ResourceNotFoundException {
+        String email = authentication.getName();
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(volunteerProfileService.submitLicense(email, request));
+    }
+
+    @GetMapping("/api/v1/volunteer/license/get")
+    public ResponseEntity<DrivingLicenseResponse> getOwnLicense(
+            Authentication authentication)
+            throws ResourceNotFoundException {
+        String email = authentication.getName();
+        return ResponseEntity.ok(volunteerProfileService.getOwnLicense(email));
     }
 
     // ═══════════════════════════════════════════════════════════

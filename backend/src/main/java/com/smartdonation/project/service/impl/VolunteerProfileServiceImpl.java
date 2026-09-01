@@ -228,6 +228,83 @@ public class VolunteerProfileServiceImpl implements VolunteerProfileService {
     }
 
     // ═══════════════════════════════════════════════════════════
+    // VOLUNTEER → OWN DRIVING LICENCE
+    // ═══════════════════════════════════════════════════════════
+
+    @Override
+    @Transactional
+    public DrivingLicenseResponse submitLicense(String email, DrivingLicenseRequest request) {
+        User user = getUserByEmail(email);
+
+        VolunteerProfile profile = volunteerProfileRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Volunteer profile not found"));
+
+        validateLicenseDates(request.getIssueDate(), request.getExpiryDate());
+
+        DrivingLicense license = profile.getDrivingLicense();
+        if (license == null) {
+            LicenseVerificationStatus licenseStatus;
+            if (request.getExpiryDate().isBefore(LocalDate.now())) {
+                licenseStatus = LicenseVerificationStatus.EXPIRED;
+            } else {
+                licenseStatus = LicenseVerificationStatus.PENDING;
+            }
+
+            license = DrivingLicense.builder()
+                    .licenseNumber(request.getLicenseNumber().trim())
+                    .issueDate(request.getIssueDate())
+                    .expiryDate(request.getExpiryDate())
+                    .issuingState(request.getIssuingState().trim())
+                    .documentUrl(
+                            request.getDocumentUrl() != null
+                                    ? request.getDocumentUrl().trim()
+                                    : null
+                    )
+                    .licenseType(null)
+                    .verificationStatus(licenseStatus)
+                    .build();
+        } else {
+            license.setLicenseNumber(request.getLicenseNumber().trim());
+            license.setIssueDate(request.getIssueDate());
+            license.setExpiryDate(request.getExpiryDate());
+            license.setIssuingState(request.getIssuingState().trim());
+            license.setDocumentUrl(
+                    request.getDocumentUrl() != null
+                            ? request.getDocumentUrl().trim()
+                            : null
+            );
+
+            if (request.getExpiryDate().isBefore(LocalDate.now())) {
+                license.setVerificationStatus(LicenseVerificationStatus.EXPIRED);
+            } else {
+                license.setVerificationStatus(LicenseVerificationStatus.PENDING);
+            }
+            license.setLicenseType(null);
+        }
+
+        DrivingLicense saved = drivingLicenseRepository.save(license);
+        log.info("Driving licence submitted for volunteer: {}", email);
+
+        return mapToLicenseResponse(saved);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DrivingLicenseResponse getOwnLicense(String email) {
+        User user = getUserByEmail(email);
+
+        VolunteerProfile profile = volunteerProfileRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Volunteer profile not found"));
+
+        DrivingLicense license = profile.getDrivingLicense();
+        if (license == null) {
+            throw new ResourceNotFoundException("No driving licence found for this volunteer");
+        }
+
+        return mapToLicenseResponse(license);
+    }
+
+    // ═══════════════════════════════════════════════════════════
     // ADMIN → VOLUNTEER MANAGEMENT
     // ═══════════════════════════════════════════════════════════
 

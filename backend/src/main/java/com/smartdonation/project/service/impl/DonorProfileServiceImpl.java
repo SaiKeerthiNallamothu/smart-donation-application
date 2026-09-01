@@ -4,6 +4,7 @@ import com.smartdonation.project.common.exception.DuplicateResourceException;
 import com.smartdonation.project.common.exception.ResourceNotFoundException;
 import com.smartdonation.project.dto.request.AddressRequest;
 import com.smartdonation.project.dto.request.DonorProfileRequest;
+import com.smartdonation.project.dto.request.update.DonorProfileUpdateRequest;
 import com.smartdonation.project.dto.response.AddressResponse;
 import com.smartdonation.project.dto.response.DonorProfileResponse;
 import com.smartdonation.project.entities.Address;
@@ -17,6 +18,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -72,7 +75,7 @@ public class DonorProfileServiceImpl implements DonorProfileService {
 
     @Override
     @Transactional
-    public DonorProfileResponse updateProfile(String email, DonorProfileRequest request) {
+    public DonorProfileResponse updateProfile(String email, DonorProfileUpdateRequest request) {
         User user = getUserByEmail(email);
 
         DonorProfile profile = donorProfileRepository.findByUserId(user.getId())
@@ -120,6 +123,31 @@ public class DonorProfileServiceImpl implements DonorProfileService {
 
         donorProfileRepository.delete(profile);
         log.info("Donor profile deleted for user: {}", email);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // ADMIN → DONOR MANAGEMENT
+    // ═══════════════════════════════════════════════════════════
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DonorProfileResponse> getAllDonorProfiles() {
+        return donorProfileRepository.findAll()
+                .stream()
+                .map(profile -> mapToResponse(profile, null))
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DonorProfileResponse getDonorProfileById(Long profileId) {
+        DonorProfile profile = donorProfileRepository.findById(profileId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Donor profile not found with id: " + profileId
+                        )
+                );
+        return mapToResponse(profile, null);
     }
 
     // ─── helpers ───────────────────────────────────────────────
