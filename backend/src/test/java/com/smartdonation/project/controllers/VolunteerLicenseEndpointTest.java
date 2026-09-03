@@ -144,7 +144,7 @@ class VolunteerLicenseEndpointTest {
     }
 
     // ═══════════════════════════════════════════════════════════
-    // GET /api/v1/volunteer/license/get
+    // GET /api/v1/volunteer/license
     // ═══════════════════════════════════════════════════════════
 
     @Test
@@ -154,7 +154,7 @@ class VolunteerLicenseEndpointTest {
         when(volunteerProfileService.getOwnLicense(any(String.class)))
                 .thenReturn(response);
 
-        mockMvc.perform(get("/api/v1/volunteer/license/get")
+        mockMvc.perform(get("/api/v1/volunteer/license")
                         .header("Authorization", "Bearer " + volunteerToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(5))
@@ -168,7 +168,7 @@ class VolunteerLicenseEndpointTest {
         when(volunteerProfileService.getOwnLicense(any(String.class)))
                 .thenThrow(new ResourceNotFoundException("No driving licence found for this volunteer"));
 
-        mockMvc.perform(get("/api/v1/volunteer/license/get")
+        mockMvc.perform(get("/api/v1/volunteer/license")
                         .header("Authorization", "Bearer " + volunteerToken))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("No driving licence found for this volunteer"));
@@ -176,28 +176,28 @@ class VolunteerLicenseEndpointTest {
 
     @Test
     void getOwnLicense_WithAdminRole_ReturnsForbidden() throws Exception {
-        mockMvc.perform(get("/api/v1/volunteer/license/get")
+        mockMvc.perform(get("/api/v1/volunteer/license")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     void getOwnLicense_WithDonorRole_ReturnsForbidden() throws Exception {
-        mockMvc.perform(get("/api/v1/volunteer/license/get")
+        mockMvc.perform(get("/api/v1/volunteer/license")
                         .header("Authorization", "Bearer " + donorToken))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     void getOwnLicense_WithNgoRole_ReturnsForbidden() throws Exception {
-        mockMvc.perform(get("/api/v1/volunteer/license/get")
+        mockMvc.perform(get("/api/v1/volunteer/license")
                         .header("Authorization", "Bearer " + ngoToken))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     void getOwnLicense_Unauthenticated_ReturnsUnauthorized() throws Exception {
-        mockMvc.perform(get("/api/v1/volunteer/license/get"))
+        mockMvc.perform(get("/api/v1/volunteer/license"))
                 .andExpect(status().isUnauthorized());
     }
 

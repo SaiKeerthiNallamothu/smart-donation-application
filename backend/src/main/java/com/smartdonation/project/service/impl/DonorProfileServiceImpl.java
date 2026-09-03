@@ -7,6 +7,7 @@ import com.smartdonation.project.dto.request.DonorProfileRequest;
 import com.smartdonation.project.dto.request.update.DonorProfileUpdateRequest;
 import com.smartdonation.project.dto.response.AddressResponse;
 import com.smartdonation.project.dto.response.DonorProfileResponse;
+import com.smartdonation.project.dto.response.UserResponseDto;
 import com.smartdonation.project.entities.Address;
 import com.smartdonation.project.entities.DonorProfile;
 import com.smartdonation.project.entities.User;
@@ -81,31 +82,51 @@ public class DonorProfileServiceImpl implements DonorProfileService {
         DonorProfile profile = donorProfileRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Donor profile not found"));
 
-        profile.setDob(request.getDob());
-        profile.setGender(request.getGender());
-        profile.setAlternativePhone(
-                request.getAlternativePhone() != null
-                        ? request.getAlternativePhone().trim()
-                        : null
-        );
+        // Update profile fields only if supplied
+        if (request.getDob() != null) {
+            profile.setDob(request.getDob());
+        }
+        if (request.getGender() != null) {
+            profile.setGender(request.getGender());
+        }
+        if (request.getAlternativePhone() != null) {
+            profile.setAlternativePhone(request.getAlternativePhone().trim());
+        }
 
-        // Update user fields (firstName, lastName, phone)
-        user.setFirstName(request.getFirstName().trim());
-        user.setLastName(request.getLastName().trim());
-        user.setPhone(request.getPhone().trim());
+        // Update user fields only if supplied
+        if (request.getFirstName() != null) {
+            user.setFirstName(request.getFirstName().trim());
+        }
+        if (request.getLastName() != null) {
+            user.setLastName(request.getLastName().trim());
+        }
+        if (request.getPhone() != null) {
+            user.setPhone(request.getPhone().trim());
+        }
 
-
-        // Update address fields
-        Address address = profile.getAddress();
-        AddressRequest addrReq = request.getAddress();
-        address.setAddressLine1(addrReq.getAddressLine1().trim());
-        address.setAddressLine2(
-                addrReq.getAddressLine2() != null ? addrReq.getAddressLine2().trim() : null
-        );
-        address.setCity(addrReq.getCity().trim());
-        address.setState(addrReq.getState().trim());
-        address.setPincode(addrReq.getPincode().trim());
-        address.setCountry(addrReq.getCountry().trim());
+        // Update address fields only if supplied
+        if (request.getAddress() != null) {
+            Address address = profile.getAddress();
+            AddressRequest addrReq = request.getAddress();
+            if (addrReq.getAddressLine1() != null) {
+                address.setAddressLine1(addrReq.getAddressLine1().trim());
+            }
+            if (addrReq.getAddressLine2() != null) {
+                address.setAddressLine2(addrReq.getAddressLine2().trim());
+            }
+            if (addrReq.getCity() != null) {
+                address.setCity(addrReq.getCity().trim());
+            }
+            if (addrReq.getState() != null) {
+                address.setState(addrReq.getState().trim());
+            }
+            if (addrReq.getPincode() != null) {
+                address.setPincode(addrReq.getPincode().trim());
+            }
+            if (addrReq.getCountry() != null) {
+                address.setCountry(addrReq.getCountry().trim());
+            }
+        }
 
         DonorProfile saved = donorProfileRepository.save(profile);
         log.info("Donor profile updated for user: {}", email);
@@ -172,6 +193,15 @@ public class DonorProfileServiceImpl implements DonorProfileService {
         User user = profile.getUser();
         Address addr = profile.getAddress();
 
+        UserResponseDto userResponse = UserResponseDto.builder()
+                .id(user.getId())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .email(user.getEmail())
+                .phone(user.getPhone())
+                .role(user.getRole())
+                .build();
+
         AddressResponse addressResponse = AddressResponse.builder()
                 .id(addr.getId())
                 .addressLine1(addr.getAddressLine1())
@@ -183,14 +213,11 @@ public class DonorProfileServiceImpl implements DonorProfileService {
                 .build();
 
         return DonorProfileResponse.builder()
-                .id(profile.getId())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .email(user.getEmail())
-                .phone(user.getPhone())
+                .profileId(profile.getId())
                 .dob(profile.getDob())
                 .gender(profile.getGender())
                 .alternativePhone(profile.getAlternativePhone())
+                .user(userResponse)
                 .address(addressResponse)
                 .message(message)
                 .build();

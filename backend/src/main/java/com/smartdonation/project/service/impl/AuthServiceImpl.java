@@ -2,6 +2,7 @@ package com.smartdonation.project.service.impl;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.resend.core.exception.ResendException;
+import com.smartdonation.project.common.exception.DuplicateResourceException;
 import com.smartdonation.project.common.exception.IllegalCredentialsException;
 import com.smartdonation.project.common.exception.InvalidOtpException;
 import com.smartdonation.project.common.exception.OtpExpiredException;
@@ -56,12 +57,12 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public UserResponseDto registerUser(UserRegisterRequest userRegisterRequest)
             throws UserAlreadyExistException, ResendException {
-        // Public registration is not allowed for ADMIN role.
-        if (userRegisterRequest.getRole() == Role.ADMIN) {
-            throw new IllegalArgumentException("Public registration with ADMIN role is not allowed. Please contact the system administrator.");
-        }
-
         String email = userRegisterRequest.getEmail().trim().toLowerCase();
+
+        // Allow only one ADMIN account in the entire system.
+        if (userRegisterRequest.getRole() == Role.ADMIN && userRepository.existsByRole(Role.ADMIN)) {
+            throw new DuplicateResourceException("Admin account already exists");
+        }
 
         if (userRepository.existsByEmail(email)) {
             throw new UserAlreadyExistException("User already exists with email: " + email);
@@ -102,6 +103,15 @@ public class AuthServiceImpl implements AuthService {
         }
 
         UserRegisterRequest request = (UserRegisterRequest) storedRequest;
+
+        // Second guard: re-check before persisting to prevent a race between
+        // two concurrent ADMIN registrations that both passed the first check.
+        if (request.getRole() == Role.ADMIN && userRepository.existsByRole(Role.ADMIN)) {
+            // Clean up the Redis pending data so it cannot be verified later.
+            redisTemplate.delete(VERIFY_OTP_KEY_PREFIX + email);
+            redisTemplate.delete(PENDING_REGISTRATION_KEY_PREFIX + email);
+            throw new DuplicateResourceException("Admin account already exists");
+        }
 
         User user = User.builder()
                 .firstName(request.getFirstName().trim())

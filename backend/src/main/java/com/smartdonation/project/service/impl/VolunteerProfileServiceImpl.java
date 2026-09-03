@@ -30,7 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.List;
-import java.util.Objects;
 
 @Slf4j
 @Service
@@ -134,79 +133,64 @@ public class VolunteerProfileServiceImpl implements VolunteerProfileService {
         VolunteerProfile profile = volunteerProfileRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Volunteer profile not found"));
 
-        validateAge(request.getDob());
-        validateVehicleEligibility(request.getDob(), request.getVehicleType());
+        // Calculate effective values for validation (use existing if not provided)
+        LocalDate effectiveDob = request.getDob() != null ? request.getDob() : profile.getDob();
+        VehicleType effectiveVehicleType = request.getVehicleType() != null
+                ? request.getVehicleType() : profile.getVehicleType();
 
-        // Update User fields
-        user.setFirstName(request.getFirstName().trim());
-        user.setLastName(request.getLastName().trim());
-        user.setPhone(request.getPhone().trim());
+        validateAge(effectiveDob);
+        validateVehicleEligibility(effectiveDob, effectiveVehicleType);
 
-        // Update Volunteer-specific fields
-        profile.setDob(request.getDob());
-        profile.setGender(request.getGender());
-        profile.setAlternativePhone(
-                request.getAlternativePhone() != null
-                        ? request.getAlternativePhone().trim()
-                        : null
-        );
-        profile.setAvailabilityStatus(request.getAvailabilityStatus());
-        profile.setVehicleType(request.getVehicleType());
-
-        // Update Address fields
-        Address address = profile.getAddress();
-        AddressRequest addrReq = request.getAddress();
-        address.setAddressLine1(addrReq.getAddressLine1().trim());
-        address.setAddressLine2(
-                addrReq.getAddressLine2() != null ? addrReq.getAddressLine2().trim() : null
-        );
-        address.setCity(addrReq.getCity().trim());
-        address.setState(addrReq.getState().trim());
-        address.setPincode(addrReq.getPincode().trim());
-        address.setCountry(addrReq.getCountry().trim());
-
-        // Update Driving License
-        DrivingLicense license = profile.getDrivingLicense();
-        if (license == null) {
-            throw new ResourceNotFoundException("No driving licence found for this volunteer profile");
+        // Update User fields (null-safe)
+        if (request.getFirstName() != null) {
+            user.setFirstName(request.getFirstName().trim());
+        }
+        if (request.getLastName() != null) {
+            user.setLastName(request.getLastName().trim());
+        }
+        if (request.getPhone() != null) {
+            user.setPhone(request.getPhone().trim());
         }
 
-        DrivingLicenseRequest licenseRequest = request.getDrivingLicense();
-        validateLicenseDates(licenseRequest.getIssueDate(), licenseRequest.getExpiryDate());
+        // Update Volunteer-specific fields (null-safe)
+        if (request.getDob() != null) {
+            profile.setDob(request.getDob());
+        }
+        if (request.getGender() != null) {
+            profile.setGender(request.getGender());
+        }
+        if (request.getAlternativePhone() != null) {
+            profile.setAlternativePhone(request.getAlternativePhone().trim());
+        }
+        if (request.getAvailabilityStatus() != null) {
+            profile.setAvailabilityStatus(request.getAvailabilityStatus());
+        }
+        if (request.getVehicleType() != null) {
+            profile.setVehicleType(request.getVehicleType());
+        }
 
-        // Detect if licence information changed (triggers re-verification)
-        boolean licenseChanged =
-                !license.getLicenseNumber().equalsIgnoreCase(licenseRequest.getLicenseNumber().trim())
-                || !license.getIssueDate().equals(licenseRequest.getIssueDate())
-                || !license.getExpiryDate().equals(licenseRequest.getExpiryDate())
-                || !license.getIssuingState().equalsIgnoreCase(licenseRequest.getIssuingState().trim())
-                || !Objects.equals(
-                        license.getDocumentUrl(),
-                        licenseRequest.getDocumentUrl() != null
-                                ? licenseRequest.getDocumentUrl().trim()
-                                : null
-                );
-
-        // Update licence fields
-        license.setLicenseNumber(licenseRequest.getLicenseNumber().trim());
-        license.setIssueDate(licenseRequest.getIssueDate());
-        license.setExpiryDate(licenseRequest.getExpiryDate());
-        license.setIssuingState(licenseRequest.getIssuingState().trim());
-        license.setDocumentUrl(
-                licenseRequest.getDocumentUrl() != null
-                        ? licenseRequest.getDocumentUrl().trim()
-                        : null
-        );
-
-        // Reset verification if licence details changed
-        if (licenseChanged) {
-            if (licenseRequest.getExpiryDate().isBefore(LocalDate.now())) {
-                license.setVerificationStatus(LicenseVerificationStatus.EXPIRED);
-            } else {
-                license.setVerificationStatus(LicenseVerificationStatus.PENDING);
+        // Update Address fields (null-safe, only if address object provided)
+        if (request.getAddress() != null) {
+            Address address = profile.getAddress();
+            AddressRequest addrReq = request.getAddress();
+            if (addrReq.getAddressLine1() != null) {
+                address.setAddressLine1(addrReq.getAddressLine1().trim());
             }
-            license.setLicenseType(null);
-            log.info("Driving licence details changed for volunteer: {} — verification reset", email);
+            if (addrReq.getAddressLine2() != null) {
+                address.setAddressLine2(addrReq.getAddressLine2().trim());
+            }
+            if (addrReq.getCity() != null) {
+                address.setCity(addrReq.getCity().trim());
+            }
+            if (addrReq.getState() != null) {
+                address.setState(addrReq.getState().trim());
+            }
+            if (addrReq.getPincode() != null) {
+                address.setPincode(addrReq.getPincode().trim());
+            }
+            if (addrReq.getCountry() != null) {
+                address.setCountry(addrReq.getCountry().trim());
+            }
         }
 
         VolunteerProfile saved = volunteerProfileRepository.save(profile);
@@ -263,6 +247,7 @@ public class VolunteerProfileServiceImpl implements VolunteerProfileService {
                     .licenseType(null)
                     .verificationStatus(licenseStatus)
                     .build();
+            profile.setDrivingLicense(license);
         } else {
             license.setLicenseNumber(request.getLicenseNumber().trim());
             license.setIssueDate(request.getIssueDate());
@@ -283,6 +268,10 @@ public class VolunteerProfileServiceImpl implements VolunteerProfileService {
         }
 
         DrivingLicense saved = drivingLicenseRepository.save(license);
+        // Ensure profile → licence FK is persisted (especially for new licence)
+        profile.setDrivingLicense(saved);
+        volunteerProfileRepository.save(profile);
+
         log.info("Driving licence submitted for volunteer: {}", email);
 
         return mapToLicenseResponse(saved);

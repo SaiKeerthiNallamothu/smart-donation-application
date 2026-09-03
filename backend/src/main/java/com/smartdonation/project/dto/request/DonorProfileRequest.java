@@ -29,19 +29,6 @@ public class DonorProfileRequest {
             message = "Alternative phone must be a valid Indian mobile number")
     private String alternativePhone;
 
-    @NotBlank(message = "First name is required")
-    @Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")
-    private String firstName;
-
-    @NotBlank(message = "Last name is required")
-    @Size(min = 2, max = 50, message = "Last name must be between 2 and 50 characters")
-    private String lastName;
-
-    @NotBlank(message = "Phone number is required")
-    @Pattern(regexp = "^(\\+91[\\-\\s]?)?[6-9]\\d{9}$",
-            message = "Phone number must be a valid Indian mobile number (e.g. +91 98765 43210 or 9876543210)")
-    private String phone;
-
     @NotNull(message = "Address is required")
     @Valid
     private AddressRequest address;

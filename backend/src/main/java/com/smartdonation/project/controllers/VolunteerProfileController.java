@@ -83,7 +83,7 @@ public class VolunteerProfileController {
                 .body(volunteerProfileService.submitLicense(email, request));
     }
 
-    @GetMapping("/api/v1/volunteer/license/get")
+    @GetMapping("/api/v1/volunteer/license")
     public ResponseEntity<DrivingLicenseResponse> getOwnLicense(
             Authentication authentication)
             throws ResourceNotFoundException {

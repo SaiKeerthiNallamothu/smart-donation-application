@@ -3,6 +3,7 @@ package com.smartdonation.project.controllers;
 import com.smartdonation.project.common.exception.ResourceNotFoundException;
 import com.smartdonation.project.dto.response.AddressResponse;
 import com.smartdonation.project.dto.response.DonorProfileResponse;
+import com.smartdonation.project.dto.response.UserResponseDto;
 import com.smartdonation.project.entities.User;
 import com.smartdonation.project.enums.Gender;
 import com.smartdonation.project.enums.Role;
@@ -72,8 +73,8 @@ class AdminDonorEndpointTest {
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$[0].firstName").value("Alice"))
-                .andExpect(jsonPath("$[1].firstName").value("Bob"));
+                .andExpect(jsonPath("$[0].user.firstName").value("Alice"))
+                .andExpect(jsonPath("$[1].user.firstName").value("Bob"));
     }
 
     @Test
@@ -127,10 +128,10 @@ class AdminDonorEndpointTest {
         mockMvc.perform(get("/api/v1/admin/donors/10")
                         .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(10))
-                .andExpect(jsonPath("$.firstName").value("Charlie"))
-                .andExpect(jsonPath("$.lastName").value("Brown"))
-                .andExpect(jsonPath("$.email").value("charlie@example.com"));
+                .andExpect(jsonPath("$.profileId").value(10))
+                .andExpect(jsonPath("$.user.firstName").value("Charlie"))
+                .andExpect(jsonPath("$.user.lastName").value("Brown"))
+                .andExpect(jsonPath("$.user.email").value("charlie@example.com"));
     }
 
     @Test
@@ -186,14 +187,20 @@ class AdminDonorEndpointTest {
                 .country("India")
                 .build();
 
-        return DonorProfileResponse.builder()
+        UserResponseDto userResponse = UserResponseDto.builder()
                 .id(id)
                 .firstName(firstName)
                 .lastName(lastName)
                 .email(firstName.toLowerCase() + "@example.com")
                 .phone("9876543210")
+                .role(Role.DONOR)
+                .build();
+
+        return DonorProfileResponse.builder()
+                .profileId(id)
                 .dob(LocalDate.of(1995, 5, 15))
                 .gender(Gender.MALE)
+                .user(userResponse)
                 .address(address)
                 .build();
     }

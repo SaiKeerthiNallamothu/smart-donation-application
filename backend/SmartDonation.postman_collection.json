@@ -1,8 +1,8 @@
 {
   "info": {
-    "_postman_id": "smart-donation-collection-004",
+    "_postman_id": "smart-donation-collection-006",
     "name": "Smart Donation API",
-    "description": "Complete API collection for Smart Donation Spring Boot backend.\n\n## Setup\n1. Import this collection into Postman\n2. Register a user (Section 1) → Verify email → Login → token auto-saved\n\n## Auth Flow\nAll registration goes through POST /api/v1/auth/register with a \"role\" field.\n- { \"role\": \"DONOR\" } → creates User with role DONOR\n- { \"role\": \"NGO\" } → creates User with role NGO\n- { \"role\": \"VOLUNTEER\" } → creates User with role VOLUNTEER\n\nThen: Verify Email → Login → JWT → Create Profile\n\n## Variables\n- {{base_url}} = http://localhost:8080\n- {{admin_token}} = Admin access token (set after login)\n- {{admin_refresh_token}} = Admin refresh token (set after login)\n- {{donor_token}} = Donor access token (set after donor login)\- {{ngo_token}} = NGO access token (set after NGO login)\n- {{volunteer_token}} = Volunteer access token (set after volunteer login)",
+    "description": "Smart Donation Spring Boot backend API.\n\n## Flow\n1. Register → 2. Verify Email → 3. Login → 4. Create Profile\n\n## Variables\n- {{base_url}} = http://localhost:8080\n- {{admin_token}} = auto-saved after login\n- {{admin_refresh_token}} = auto-saved after login\n- {{donor_token}} = auto-saved after login\n- {{ngo_token}} = auto-saved after login\n- {{volunteer_token}} = auto-saved after login\n- {{ngo_profile_id}} = auto-saved after profile create\n- {{donor_profile_id}} = auto-saved after profile create\n- {{volunteer_profile_id}} = auto-saved after profile create",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -19,10 +19,11 @@
   "item": [
     {
       "name": "1. Auth",
-      "description": "Common registration, verify email, login, refresh, logout, password management.",
+      "description": "Register → Verify Email → Login. Change role/email/password in body as needed.",
       "item": [
         {
-          "name": "1.1 Register User",
+          "name": "1.1 Register",
+          "description": "Register a new user. Change role to DONOR, NGO, VOLUNTEER, or ADMIN.",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -40,7 +41,8 @@
           "response": []
         },
         {
-          "name": "1.2 Verify Email OTP",
+          "name": "1.2 Verify Email",
+          "description": "Enter the OTP sent to the registered email.",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -59,6 +61,7 @@
         },
         {
           "name": "1.3 Login",
+          "description": "Login and auto-save token. Change email/password to match your registered user.",
           "event": [
             {
               "listen": "test",
@@ -66,9 +69,21 @@
                 "exec": [
                   "var jsonData = pm.response.json();",
                   "if (jsonData.token) {",
+                  "    var role = jsonData.role;",
                   "    pm.collectionVariables.set('admin_token', jsonData.token);",
                   "    pm.collectionVariables.set('admin_refresh_token', jsonData.refreshToken);",
-                  "    console.log('admin_token saved to collection variables');",
+                  "    if (role === 'DONOR') {",
+                  "        pm.collectionVariables.set('donor_token', jsonData.token);",
+                  "        console.log('donor_token saved');",
+                  "    } else if (role === 'NGO') {",
+                  "        pm.collectionVariables.set('ngo_token', jsonData.token);",
+                  "        console.log('ngo_token saved');",
+                  "    } else if (role === 'VOLUNTEER') {",
+                  "        pm.collectionVariables.set('volunteer_token', jsonData.token);",
+                  "        console.log('volunteer_token saved');",
+                  "    } else {",
+                  "        console.log('admin_token saved');",
+                  "    }",
                   "}",
                   "pm.test('Status code is 200', function () {",
                   "    pm.response.to.have.status(200);",
@@ -83,7 +98,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@test.com\",\n  \"password\": \"Admin@123\"\n}",
+              "raw": "{\n  \"email\": \"priya@test.com\",\n  \"password\": \"Donor@123\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -113,7 +128,43 @@
           "response": []
         },
         {
-          "name": "1.5 Logout",
+          "name": "1.5 Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"priya@test.com\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/forgot-password",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "forgot-password"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.6 Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"priya@test.com\",\n  \"otp\": \"000000\",\n  \"newPassword\": \"Donor@456\",\n  \"confirmPassword\": \"Donor@456\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/reset-password",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "reset-password"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.7 Logout",
           "request": {
             "method": "POST",
             "header": [
@@ -126,48 +177,12 @@
             }
           },
           "response": []
-        },
-        {
-          "name": "1.6 Forgot Password",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@test.com\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{base_url}}/api/v1/auth/forgot-password",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "auth", "forgot-password"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "1.7 Reset Password",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@test.com\",\n  \"otp\": \"000000\",\n  \"newPassword\": \"Admin@456\",\n  \"confirmPassword\": \"Admin@456\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{base_url}}/api/v1/auth/reset-password",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "auth", "reset-password"]
-            }
-          },
-          "response": []
         }
       ]
     },
     {
-      "name": "2. Donor Profile — DONOR ONLY",
-      "description": "Donor self-profile CRUD. Requires DONOR role token. Profile is identified via JWT authentication.",
+      "name": "2. Donor Profile",
+      "description": "Requires {{donor_token}}.",
       "item": [
         {
           "name": "2.1 Create Donor Profile",
@@ -176,9 +191,11 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status code is 201', function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});"
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.profileId) {",
+                  "    pm.collectionVariables.set('donor_profile_id', jsonData.profileId);",
+                  "    console.log('donor_profile_id saved: ' + jsonData.profileId);",
+                  "}"
                 ],
                 "type": "text/javascript"
               }
@@ -192,7 +209,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dob\": \"1995-06-15\",\n  \"gender\": \"MALE\",\n  \"firstName\": \"Priya\",\n  \"lastName\": \"Sharma\",\n  \"phone\": \"9876543210\",\n  \"alternativePhone\": \"9123456789\",\n  \"address\": {\n    \"addressLine1\": \"MG Road 42\",\n    \"addressLine2\": \"Near Central Mall\",\n    \"city\": \"Bangalore\",\n    \"state\": \"Karnataka\",\n    \"pincode\": \"560001\",\n    \"country\": \"India\"\n  }\n}",
+              "raw": "{\n  \"dob\": \"1995-06-15\",\n  \"gender\": \"MALE\",\n  \"alternativePhone\": \"9123456789\",\n  \"address\": {\n    \"addressLine1\": \"MG Road 42\",\n    \"city\": \"Bangalore\",\n    \"state\": \"Karnataka\",\n    \"pincode\": \"560001\",\n    \"country\": \"India\"\n  }\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -228,7 +245,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dob\": \"1995-06-15\",\n  \"gender\": \"FEMALE\",\n  \"firstName\": \"Priya\",\n  \"lastName\": \"Sharma\",\n  \"phone\": \"9876543210\",\n  \"alternativePhone\": \"9999999999\",\n  \"address\": {\n    \"addressLine1\": \"Brigade Road 10\",\n    \"addressLine2\": \"Floor 3\",\n    \"city\": \"Mumbai\",\n    \"state\": \"Maharashtra\",\n    \"pincode\": \"400001\",\n    \"country\": \"India\"\n  }\n}",
+              "raw": "{\n  \"firstName\": \"Priya\",\n  \"lastName\": \"Sharma\",\n  \"phone\": \"9876543210\",\n  \"dob\": \"1995-06-15\",\n  \"gender\": \"FEMALE\",\n  \"alternativePhone\": \"9999999999\",\n  \"address\": {\n    \"addressLine1\": \"Brigade Road 10\",\n    \"city\": \"Mumbai\",\n    \"state\": \"Maharashtra\",\n    \"pincode\": \"400001\",\n    \"country\": \"India\"\n  }\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -257,8 +274,8 @@
       ]
     },
     {
-      "name": "3. NGO Profile — NGO ONLY",
-      "description": "NGO self-profile CRUD. Requires NGO role token.",
+      "name": "3. NGO Profile",
+      "description": "Requires {{ngo_token}}.",
       "item": [
         {
           "name": "3.1 Create NGO Profile",
@@ -267,9 +284,6 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status code is 201', function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});",
                   "var jsonData = pm.response.json();",
                   "if (jsonData.profileId) {",
                   "    pm.collectionVariables.set('ngo_profile_id', jsonData.profileId);",
@@ -288,7 +302,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"ngoName\": \"Hope Foundation\",\n  \"registrationNumber\": \"NGO-2024-001\",\n  \"contactPersonName\": \"Rahul Kumar\",\n  \"description\": \"A non-profit organization focused on education and healthcare.\",\n  \"website\": \"https://hopefoundation.org\",\n  \"address\": {\n    \"addressLine1\": \"123 Charity Lane\",\n    \"addressLine2\": \"Near City Park\",\n    \"city\": \"Delhi\",\n    \"state\": \"Delhi\",\n    \"pincode\": \"110001\",\n    \"country\": \"India\"\n  }\n}",
+              "raw": "{\n  \"ngoName\": \"Hope Foundation\",\n  \"registrationNumber\": \"NGO-2024-001\",\n  \"contactPersonName\": \"Rahul Kumar\",\n  \"description\": \"A non-profit organization focused on education and healthcare.\",\n  \"website\": \"https://hopefoundation.org\",\n  \"address\": {\n    \"addressLine1\": \"123 Charity Lane\",\n    \"city\": \"Delhi\",\n    \"state\": \"Delhi\",\n    \"pincode\": \"110001\",\n    \"country\": \"India\"\n  }\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -324,7 +338,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"ngoName\": \"Hope Foundation India\",\n  \"registrationNumber\": \"NGO-2024-001\",\n  \"contactPersonName\": \"Rahul Kumar\",\n  \"description\": \"A non-profit organization focused on education, healthcare, and community development.\",\n  \"website\": \"https://hopefoundationindia.org\",\n  \"address\": {\n    \"addressLine1\": \"456 Service Road\",\n    \"addressLine2\": \"Floor 2\",\n    \"city\": \"Mumbai\",\n    \"state\": \"Maharashtra\",\n    \"pincode\": \"400001\",\n    \"country\": \"India\"\n  }\n}",
+              "raw": "{\n  \"firstName\": \"Rahul\",\n  \"lastName\": \"Kumar\",\n  \"phone\": \"9876543210\",\n  \"ngoName\": \"Hope Foundation India\",\n  \"registrationNumber\": \"NGO-2024-001\",\n  \"contactPersonName\": \"Rahul Kumar\",\n  \"description\": \"A non-profit organization focused on education, healthcare, and community development.\",\n  \"website\": \"https://hopefoundationindia.org\",\n  \"address\": {\n    \"addressLine1\": \"456 Service Road\",\n    \"city\": \"Mumbai\",\n    \"state\": \"Maharashtra\",\n    \"pincode\": \"400001\",\n    \"country\": \"India\"\n  }\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -353,24 +367,11 @@
       ]
     },
     {
-      "name": "4. Volunteer Profile — VOLUNTEER ONLY",
-      "description": "Volunteer self-profile CRUD. Requires VOLUNTEER role token.",
+      "name": "4. Volunteer Profile",
+      "description": "Requires {{volunteer_token}}.",
       "item": [
         {
           "name": "4.1 Create Volunteer Profile",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "pm.test('Status code is 201', function () {",
-                  "    pm.response.to.have.status(201);",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "request": {
             "method": "POST",
             "header": [
@@ -379,7 +380,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dob\": \"1998-03-20\",\n  \"gender\": \"MALE\",\n  \"firstName\": \"Amit\",\n  \"lastName\": \"Patel\",\n  \"phone\": \"9876543210\",\n  \"address\": {\n    \"addressLine1\": \"10 MG Road\",\n    \"city\": \"Pune\",\n    \"state\": \"Maharashtra\",\n    \"pincode\": \"411001\",\n    \"country\": \"India\"\n  }\n}",
+              "raw": "{\n  \"dob\": \"1998-03-20\",\n  \"gender\": \"MALE\",\n  \"alternativePhone\": \"9123456789\",\n  \"availabilityStatus\": \"AVAILABLE\",\n  \"vehicleType\": \"TWO_WHEELER\",\n  \"address\": {\n    \"addressLine1\": \"10 MG Road\",\n    \"city\": \"Pune\",\n    \"state\": \"Maharashtra\",\n    \"pincode\": \"411001\",\n    \"country\": \"India\"\n  },\n  \"drivingLicense\": {\n    \"licenseNumber\": \"MH-2022-001234\",\n    \"issueDate\": \"2022-06-01\",\n    \"expiryDate\": \"2032-05-31\",\n    \"issuingState\": \"Maharashtra\",\n    \"documentUrl\": \"https://example.com/license.pdf\"\n  }\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -415,7 +416,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"dob\": \"1998-03-20\",\n  \"gender\": \"MALE\",\n  \"firstName\": \"Amit\",\n  \"lastName\": \"Patel\",\n  \"phone\": \"9876543210\",\n  \"address\": {\n    \"addressLine1\": \"20 Park Street\",\n    \"city\": \"Mumbai\",\n    \"state\": \"Maharashtra\",\n    \"pincode\": \"400001\",\n    \"country\": \"India\"\n  }\n}",
+              "raw": "{\n  \"firstName\": \"Amit\",\n  \"lastName\": \"Patel\",\n  \"phone\": \"9876543210\",\n  \"dob\": \"1998-03-20\",\n  \"gender\": \"MALE\",\n  \"alternativePhone\": \"9123456789\",\n  \"availabilityStatus\": \"AVAILABLE\",\n  \"vehicleType\": \"TWO_WHEELER\",\n  \"address\": {\n    \"addressLine1\": \"20 Park Street\",\n    \"city\": \"Mumbai\",\n    \"state\": \"Maharashtra\",\n    \"pincode\": \"400001\",\n    \"country\": \"India\"\n  }\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -444,11 +445,11 @@
       ]
     },
     {
-      "name": "5. Volunteer Driving Licence — VOLUNTEER ONLY",
-      "description": "Volunteer driving licence submission and retrieval. Requires VOLUNTEER role token.",
+      "name": "5. Volunteer Driving Licence",
+      "description": "Requires {{volunteer_token}}.",
       "item": [
         {
-          "name": "5.1 Submit Driving Licence",
+          "name": "5.1 Submit/Resubmit Driving Licence",
           "request": {
             "method": "POST",
             "header": [
@@ -476,9 +477,9 @@
               { "key": "Authorization", "value": "Bearer {{volunteer_token}}" }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/volunteer/license/get",
+              "raw": "{{base_url}}/api/v1/volunteer/license",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "volunteer", "license", "get"]
+              "path": ["api", "v1", "volunteer", "license"]
             }
           },
           "response": []
@@ -486,11 +487,11 @@
       ]
     },
     {
-      "name": "6. User Management — ADMIN ONLY",
-      "description": "Admin-only user management. Requires ADMIN role token.",
+      "name": "6. Admin → Users",
+      "description": "Requires {{admin_token}}.",
       "item": [
         {
-          "name": "6.1 Get All Users",
+          "name": "6.1 Get All Non-Admin Users",
           "request": {
             "method": "GET",
             "header": [
@@ -512,9 +513,9 @@
               { "key": "Authorization", "value": "Bearer {{admin_token}}" }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/users/{{user_id}}",
+              "raw": "{{base_url}}/api/v1/users/1",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "users", "{{user_id}}"]
+              "path": ["api", "v1", "users", "1"]
             }
           },
           "response": []
@@ -535,7 +536,7 @@
           "response": []
         },
         {
-          "name": "6.4 Get Users by Role (DONOR)",
+          "name": "6.4 Get Users By Role",
           "request": {
             "method": "GET",
             "header": [
@@ -550,37 +551,7 @@
           "response": []
         },
         {
-          "name": "6.5 Get Users by Role (VOLUNTEER)",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/v1/users/role/VOLUNTEER",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "users", "role", "VOLUNTEER"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "6.6 Get Users by Role (NGO)",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/v1/users/role/NGO",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "users", "role", "NGO"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "6.7 Count Users",
+          "name": "6.5 Count Users",
           "request": {
             "method": "GET",
             "header": [
@@ -595,16 +566,16 @@
           "response": []
         },
         {
-          "name": "6.8 Deactivate User",
+          "name": "6.6 Deactivate User",
           "request": {
             "method": "PATCH",
             "header": [
               { "key": "Authorization", "value": "Bearer {{admin_token}}" }
             ],
             "url": {
-              "raw": "{{base_url}}/api/v1/users/{{user_id}}/deactivate",
+              "raw": "{{base_url}}/api/v1/users/1/deactivate",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "users", "{{user_id}}", "deactivate"]
+              "path": ["api", "v1", "users", "1", "deactivate"]
             }
           },
           "response": []
@@ -612,8 +583,8 @@
       ]
     },
     {
-      "name": "7. Admin → NGO Verification — ADMIN ONLY",
-      "description": "Admin NGO management and verification. Requires ADMIN role token.",
+      "name": "7. Admin → NGO Verification",
+      "description": "Requires {{admin_token}}.",
       "item": [
         {
           "name": "7.1 Get All NGOs",
@@ -693,8 +664,8 @@
       ]
     },
     {
-      "name": "8. Admin → Donor Management — ADMIN ONLY",
-      "description": "Admin can view all donor profiles. Requires ADMIN role token.",
+      "name": "8. Admin → Donor",
+      "description": "Requires {{admin_token}}.",
       "item": [
         {
           "name": "8.1 Get All Donors",
@@ -729,8 +700,8 @@
       ]
     },
     {
-      "name": "9. Admin → Volunteer Management — ADMIN ONLY",
-      "description": "Admin volunteer management and licence verification/rejection. Requires ADMIN role token.",
+      "name": "9. Admin → Volunteer",
+      "description": "Requires {{admin_token}}.",
       "item": [
         {
           "name": "9.1 Get All Volunteers",
@@ -787,7 +758,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"licenseType\": \"Light Motor Vehicle\",\n  \"verificationStatus\": \"VERIFIED\"\n}",
+              "raw": "{\n  \"licenseType\": \"FOUR_WHEELER\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -816,8 +787,8 @@
       ]
     },
     {
-      "name": "10. Donor → Verified NGOs — DONOR ONLY",
-      "description": "Donor can view only VERIFIED NGO profiles. Requires DONOR role token.",
+      "name": "10. Donor → Verified NGOs",
+      "description": "Requires {{donor_token}}.",
       "item": [
         {
           "name": "10.1 Get All Verified NGOs",
@@ -852,8 +823,8 @@
       ]
     },
     {
-      "name": "11. Security & Validation Tests",
-      "description": "Test authorization (401/403), role restrictions, and input validation (400).",
+      "name": "11. Security Tests",
+      "description": "Test 401/403/400 scenarios.",
       "item": [
         {
           "name": "11.1 No Token → Users (401)",
@@ -898,31 +869,7 @@
           "response": []
         },
         {
-          "name": "11.4 No Token → Donor Profile (401)",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{base_url}}/api/v1/donor/profile/get",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "donor", "profile", "get"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "11.5 No Token → Logout (401)",
-          "request": {
-            "method": "POST",
-            "url": {
-              "raw": "{{base_url}}/api/v1/auth/logout",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "auth", "logout"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "11.6 Admin Token → Volunteer Profile (403)",
+          "name": "11.4 Admin Token → Volunteer Profile (403)",
           "request": {
             "method": "GET",
             "header": [
@@ -937,52 +884,7 @@
           "response": []
         },
         {
-          "name": "11.7 Donor Token → Volunteer Profile (403)",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{donor_token}}" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/v1/volunteer/profile/get",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "volunteer", "profile", "get"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "11.8 Donor Token → Volunteer Licence (403)",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{donor_token}}" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/v1/volunteer/license/get",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "volunteer", "license", "get"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "11.9 Admin Token → Volunteer Licence (403)",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{admin_token}}" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/v1/volunteer/license/get",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "volunteer", "license", "get"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "11.10 Donor Token → Admin Donors (403)",
+          "name": "11.5 Donor Token → Admin Donors (403)",
           "request": {
             "method": "GET",
             "header": [
@@ -997,37 +899,7 @@
           "response": []
         },
         {
-          "name": "11.11 Volunteer Token → Admin Donors (403)",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{volunteer_token}}" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/v1/admin/donors",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "admin", "donors"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "11.12 Donor Token → NGO Profile (403)",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{donor_token}}" }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/v1/ngo/profile/get",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "ngo", "profile", "get"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "11.13 Missing Fields → Create Profile (400)",
+          "name": "11.6 Missing Fields → Create Profile (400)",
           "request": {
             "method": "POST",
             "header": [
@@ -1037,27 +909,6 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"dob\": \"1995-06-15\",\n  \"gender\": \"MALE\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": {
-              "raw": "{{base_url}}/api/v1/donor/profile/create",
-              "host": ["{{base_url}}"],
-              "path": ["api", "v1", "donor", "profile", "create"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "11.14 Invalid Gender → Create Profile (400)",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{donor_token}}" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"dob\": \"1995-06-15\",\n  \"gender\": \"FEMAIL\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\",\n  \"phone\": \"9876543210\",\n  \"address\": {\n    \"addressLine1\": \"Test Street\",\n    \"city\": \"Delhi\",\n    \"state\": \"Delhi\",\n    \"pincode\": \"110001\",\n    \"country\": \"India\"\n  }\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": {

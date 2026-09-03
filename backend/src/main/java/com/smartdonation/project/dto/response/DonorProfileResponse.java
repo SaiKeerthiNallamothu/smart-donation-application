@@ -14,14 +14,14 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class DonorProfileResponse {
 
-    private Long id;
-    private String firstName;
-    private String lastName;
-    private String email;
-    private String phone;
+    private Long profileId;
+
     private LocalDate dob;
     private Gender gender;
     private String alternativePhone;
+
+    private UserResponseDto user;
     private AddressResponse address;
+
     private String message;
 }
